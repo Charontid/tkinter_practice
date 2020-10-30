@@ -1,7 +1,7 @@
 import tkinter as tk
 from itertools import chain
 """
-special thanks to __blackjack__ for contiuous code reviews
+special thanks to Sirius3 and __blackjack__ for contiuous code reviews
 """
 
 def main():
@@ -180,6 +180,8 @@ class Kniffel(tk.Tk):
                 player[name].config(bg=Kniffel.DARK)
             for name in self.LABELS:
                 player[name].config(text="-")
+
+
 
 
 if __name__ == '__main__':
