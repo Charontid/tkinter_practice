@@ -1,56 +1,51 @@
 import tkinter as tk
-
+from itertools import chain
+"""
+special thanks to __blackjack__ for contiuous code reviews
+"""
 
 def main():
     game = Kniffel()
     game.mainloop()
 
-class Kniffel(tk.Tk):
 
+class Kniffel(tk.Tk):
     DARK = "#093E62"
     #LIGHT = "#468DAE"
     #DARK2 = "#0F668E" # momentan nicht benutzt
+    ENTRIES_BLOCK1 = {
+        "1:": set(range(1, 6)),
+        "2:": set(range(2, 11, 2)),
+        "3:": set(range(3, 16, 3)),
+        "4:": set(range(4, 21, 4)),
+        "5:": set(range(5,26,5)),
+        "6:": set(range(6,31,6))
+    }
+    ENTRIES_BLOCK2 = {
+        "Full House:": {0, 25},
+        "kleine Straße:": {0, 30},
+        "große Straße:": {0, 40},
+        "3er Pasch:": set(range(5,31)),
+        "4er Pasch:": set(range(5,31)),
+        "Chance:": set(range(5,31)),
+        "Kniffel:": {0, 50}
+    }
+    LABELS = ["Summe:", "Bonus:", "Summe2:", "Total:"]
 
     NAMES = [
         "Name:",
-        "1:",
-        "2:",
-        "3:",
-        "4:",
-        "5:",
-        "6:",
+        *ENTRIES_BLOCK1,
         "Bonus:",
         "Summe:",
-        "Full House:",
-        "kleine Straße:",
-        "große Straße:",
-        "3er Pasch:",
-        "4er Pasch:",
-        "Chance:",
-        "Kniffel:",
+        *ENTRIES_BLOCK2,
         "Summe2:",
         "Total:"
     ]
 
-    ENTRY_FIELDS =  {"1:" : set(range(1, 6)),
-        "2:" : set(range(2, 11, 2)),
-        "3:" : set(range(3, 16, 3)),
-        "4:" : set(range(4, 21, 4)),
-        "5:" : set(range(5,26,5)),
-        "6:" : set(range(6,31,6)),
-        "Full House:" : {0, 25},
-        "kleine Straße:" : {0, 30},
-        "große Straße:" : {0, 40},
-        "3er Pasch:" : set(range(5,31)),
-        "4er Pasch:" : set(range(5,31)),
-        "Chance:" : set(range(5,31)),
-        "Kniffel:" : {0, 50}
-    }
-
     def __init__(self):
         super().__init__()
         self.geometry("500x680")
-        self.config(bg=Kniffel.DARK)
+        self.config(bg=self.DARK)
         self.title("Kniffel")
 
         # -- Spielerverwaltung --
@@ -76,10 +71,10 @@ class Kniffel(tk.Tk):
         ).grid(row=0, column=2, padx=5, pady=5)
 
         # -- Tabelle --
-        for i, name in enumerate(Kniffel.NAMES):
+        for i, name in enumerate(self.NAMES):
             tk.Label(
                 self,
-                bg=Kniffel.DARK,
+                bg=self.DARK,
                 fg="white",
                 relief = tk.GROOVE,
                 text=name,
@@ -105,12 +100,10 @@ class Kniffel(tk.Tk):
 
     def add_player(self):
         if self.new_player.get() in {"neuer Spieler", ""}:
-            self.new_player.delete(0, tk.END)
             self.new_player.config(fg="red")
-            self.new_player.insert(0, "neuer Spieler")
         else:
             name = self.new_player.get()
-            player = {name : None for name in Kniffel.NAMES}
+            player = {}
             player['Name:'] = tk.Label(
                 self,
                 bg=Kniffel.DARK,
@@ -120,7 +113,7 @@ class Kniffel(tk.Tk):
             )
 
             length = len(name)
-            for name in Kniffel.ENTRY_FIELDS.keys():
+            for name in chain(self.ENTRIES_BLOCK1, self.ENTRIES_BLOCK2):
                 player[name] = tk.Entry(
                     self,
                     bg=Kniffel.DARK,
@@ -128,7 +121,7 @@ class Kniffel(tk.Tk):
                     width=max(8, length)
                 )
 
-            for name in ["Bonus:", "Summe:", "Summe2:", "Total:"]:
+            for name in self.LABELS:
                 player[name] = tk.Label(
                     self,
                     bg=Kniffel.DARK,
@@ -138,64 +131,54 @@ class Kniffel(tk.Tk):
                     width=max(8, length)
                 )
 
-            # -- Layout --
             column = len(self.players) + 1
-            for i, key in enumerate(player):
-                player[key].grid(column=column, row=i+1)
+            for row, key in enumerate(self.NAMES, 1):
+                player[key].grid(column=column, row=row)
             self.players.append(player)
 
-            self.new_player.delete(0, tk.END)
             self.new_player.config(fg="black")
-            self.new_player.insert(0, "neuer Spieler")
+        self.new_player.delete(0, tk.END)
+        self.new_player.insert(0, "neuer Spieler")
 
     def remove_player(self):
-        if len(self.players) > 0:
+        if self.players:
             player = self.players.pop()
             for widget in player:
                 player.get(widget).destroy()
 
     def sum_up(self):
         for player in self.players:
-            summe1 = 0
-            for key in ["1:", "2:", "3:", "4:", "5:", "6:"]:
-                summe1 += self.evaluate(player, key)
+            summe1 = sum(
+                self.evaluate(player[key], numbers)
+                for key, numbers in self.ENTRIES_BLOCK1.items()
+            )
             bonus = 0 if summe1 < 63 else 25
             summe1 += bonus
             player["Bonus:"].config(text=bonus)
             player["Summe:"].config(text=summe1)
 
-            summe2 = 0
-            for key in [
-                "3er Pasch:",
-                "4er Pasch:",
-                "Chance:",
-                "Full House:",
-                "kleine Straße:",
-                "große Straße:",
-                "Kniffel:"
-            ]:
-                summe2 += self.evaluate(player, key)
-
+            summe2 = sum(
+                self.evaluate(player[key], numbers)
+                for key, numbers in self.ENTRIES_BLOCK2.items()
+            )
             player["Summe2:"].config(text=summe2)
             player["Total:"].config(text=summe1+summe2)
 
-    def evaluate(self, player, key):
-        value = player[key].get()
-        numbers = Kniffel.ENTRY_FIELDS.get(key)
+    def evaluate(self, entry, numbers):
+        value = entry.get()
         if value.isdigit() and int(value) in numbers:
-            player[key].config(bg=Kniffel.DARK)
+            entry.config(bg=Kniffel.DARK)
             return int(value)
         else:
-            player[key].config(bg="red")
+            entry.config(bg="red")
             return 0
 
     def reset_points(self):
         for player in self.players:
-            for name in Kniffel.ENTRY_FIELDS:
+            for name in chain(self.ENTRIES_BLOCK1, self.ENTRIES_BLOCK2):
                 player[name].delete(0, tk.END)
                 player[name].config(bg=Kniffel.DARK)
-                player[name].insert(0, "")
-            for name in ["Summe:", "Bonus:", "Summe2:", "Total:"]:
+            for name in self.LABELS:
                 player[name].config(text="-")
 
 
