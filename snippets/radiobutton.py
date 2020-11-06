@@ -29,11 +29,12 @@ class TestApp(tk.Tk):
                 indicatoron = 0,# turns the radiobutton into clickable rectangle
                 width=20, padx = 5, pady=5,
                 text=text,
-                variable=self.choice,
-                value=text,#mode,#could use keywords to control the values, or just the next, visible next to the button
+                variable=self.choice,#variable, that stores the current selection of the Radiobutton - group
+                value=text,#mode,#keyword for the variable, coud either use the same as text, or whatever is more useful
                 command=self.ShowChoice #Optional command, that runs, once a Radiobutton is selected
             )
             b.pack(anchor="w")
+
         self.show = tk.Label(
             self,
             text=f"currently selected: -",
@@ -42,8 +43,9 @@ class TestApp(tk.Tk):
         )
         self.show.pack()
 
-
     def ShowChoice(self):
+        """Updates the text of the show-Label, with the current value of the
+        shared Radiobutton variable."""
         self.show.config(text=f"currently selected: {self.choice.get()}")
 
 
