@@ -5,4 +5,6 @@ Smaller Projects:
 a scoreboard for the dicegame Kniffel plus point evaluation.
 
 Snippets:
-[Radiobutton](https://github.com/Charontid/tkinter_practice/blob/main/snippets/radiobutton.py), short example how to use Radiobuttons.
+[Radiobutton](https://github.com/Charontid/tkinter_practice/blob/main/snippets/radiobutton.py)
+
+[Checkboxes](https://github.com/Charontid/tkinter_practice/blob/main/snippets/checkboxes.py)
